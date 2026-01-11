@@ -1,26 +1,61 @@
 import React, { useState } from 'react';
-import { BookOpen, Lock, User, AlertCircle } from 'lucide-react';
+import { BookOpen, Lock, User, AlertCircle, Mail, Phone, MapPin } from 'lucide-react';
 
-const LoginPage = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+const RegisterPage = () => {
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    phone: '',
+    address: '',
+    password: '',
+    confirmPassword: '',
+    role: 'MEMBER',
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
   const handleSubmit = () => {
-    if (username && password) {
-      setLoading(true);
-      setError(null);
-      
-      // DEMO: Simulare autentificare
-      
-      setTimeout(() => {
-        setLoading(false);
-        alert('Autentificare reușită!');
-      }, 1500);
-    } else {
-      setError('Te rugăm să completezi toate câmpurile.');
+    setError(null);
+
+    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
+      setError('Te rugam să completezi toate campurile obligatorii.');
+      return;
     }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Parolele nu coincid.');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Parola trebuie sa aiba cel putin 6 caractere.');
+      return;
+    }
+
+    setLoading(true);
+    
+    // DEMO: Simulare înregistrare
+    // În proiectul tău real, înlocuiește cu:
+    // register({ variables: { 
+    //   username: formData.username,
+    //   email: formData.email,
+    //   phone: formData.phone,
+    //   address: formData.address,
+    //   password: formData.password,
+    //   role: formData.role 
+    // }});
+    
+    setTimeout(() => {
+      setLoading(false);
+      alert(`Cont creat cu succes cu rolul ${formData.role}!`);
+    }, 1500);
   };
 
   const handleKeyPress = (e) => {
@@ -45,8 +80,8 @@ const LoginPage = () => {
             <div style={styles.logoContainer}>
               <BookOpen size={40} color="white" />
             </div>
-            <h1 style={styles.title}>Biblioteca</h1>
-            <p style={styles.subtitle}>Sistem pentru organizarea bibliotecii</p>
+            <h1 style={styles.title}>Creeaza cont</h1>
+            <p style={styles.subtitle}>Alatura-te bibliotecii noastre</p>
           </div>
 
           <div style={styles.formContainer}>
@@ -56,9 +91,95 @@ const LoginPage = () => {
               </div>
               <input
                 type="text"
-                placeholder="Utilizator (ex: admin)"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                name="username"
+                placeholder="Nume utilizator *"
+                value={formData.username}
+                onChange={handleChange}
+                onKeyPress={handleKeyPress}
+                style={styles.input}
+                onFocus={(e) => e.target.style.outline = '2px solid #a855f7'}
+                onBlur={(e) => e.target.style.outline = 'none'}
+              />
+            </div>
+
+            <div style={styles.inputGroup}>
+              <div style={styles.iconContainer}>
+                <Mail size={20} color="#d8b4fe" />
+              </div>
+              <input
+                type="email"
+                name="email"
+                placeholder="Email *"
+                value={formData.email}
+                onChange={handleChange}
+                onKeyPress={handleKeyPress}
+                style={styles.input}
+                onFocus={(e) => e.target.style.outline = '2px solid #a855f7'}
+                onBlur={(e) => e.target.style.outline = 'none'}
+              />
+            </div>
+
+            <div style={styles.inputGroup}>
+              <div style={styles.iconContainer}>
+                <Phone size={20} color="#d8b4fe" />
+              </div>
+              <input
+                type="tel"
+                name="phone"
+                placeholder="Telefon (opțional)"
+                value={formData.phone}
+                onChange={handleChange}
+                onKeyPress={handleKeyPress}
+                style={styles.input}
+                onFocus={(e) => e.target.style.outline = '2px solid #a855f7'}
+                onBlur={(e) => e.target.style.outline = 'none'}
+              />
+            </div>
+
+            <div style={styles.inputGroup}>
+              <div style={styles.iconContainer}>
+                <MapPin size={20} color="#d8b4fe" />
+              </div>
+              <input
+                type="text"
+                name="address"
+                placeholder="Adresă (opțional)"
+                value={formData.address}
+                onChange={handleChange}
+                onKeyPress={handleKeyPress}
+                style={styles.input}
+                onFocus={(e) => e.target.style.outline = '2px solid #a855f7'}
+                onBlur={(e) => e.target.style.outline = 'none'}
+              />
+            </div>
+
+            <div style={styles.inputGroup}>
+              <div style={styles.iconContainer}>
+                <User size={20} color="#d8b4fe" />
+              </div>
+              <select
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                style={styles.select}
+                onFocus={(e) => e.target.style.outline = '2px solid #a855f7'}
+                onBlur={(e) => e.target.style.outline = 'none'}
+              >
+                <option value="MEMBER">Membru</option>
+                <option value="ADMIN">Administrator</option>
+              </select>
+            </div>
+
+            <div style={styles.inputGroup}>
+              <div style={styles.iconContainer}>
+                <Lock size={20} color="#d8b4fe" />
+              </div>
+              <input
+                type="password"
+                name="password"
+                placeholder="Parolă *"
+                value={formData.password}
+                onChange={handleChange}
                 onKeyPress={handleKeyPress}
                 style={styles.input}
                 onFocus={(e) => e.target.style.outline = '2px solid #a855f7'}
@@ -72,9 +193,10 @@ const LoginPage = () => {
               </div>
               <input
                 type="password"
-                placeholder="Parolă"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                name="confirmPassword"
+                placeholder="Confirmă parola *"
+                value={formData.confirmPassword}
+                onChange={handleChange}
                 onKeyPress={handleKeyPress}
                 style={styles.input}
                 onFocus={(e) => e.target.style.outline = '2px solid #a855f7'}
@@ -127,23 +249,26 @@ const LoginPage = () => {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     />
                   </svg>
-                  Se verifică...
+                  Se creeaza contul...
                 </span>
               ) : (
-                'Intră în cont'
+                'Creează cont'
               )}
             </button>
           </div>
 
           <div style={styles.linkContainer}>
-            <a 
-              href="#" 
-              style={styles.link}
-              onMouseEnter={(e) => e.target.style.color = 'white'}
-              onMouseLeave={(e) => e.target.style.color = '#e9d5ff'}
-            >
-              Ai uitat parola?
-            </a>
+            <p style={styles.linkText}>
+              Ai deja cont?{' '}
+              <a 
+                href="/login" 
+                style={styles.link}
+                onMouseEnter={(e) => e.target.style.color = 'white'}
+                onMouseLeave={(e) => e.target.style.color = '#e9d5ff'}
+              >
+                Autentifica-te
+              </a>
+            </p>
           </div>
 
         </div>
@@ -215,7 +340,7 @@ const styles = {
   cardWrapper: {
     position: 'relative',
     width: '100%',
-    maxWidth: '448px',
+    maxWidth: '500px',
     zIndex: 10,
   },
   cardGlow: {
@@ -267,7 +392,7 @@ const styles = {
   formContainer: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '24px',
+    gap: '20px',
   },
   inputGroup: {
     position: 'relative',
@@ -294,6 +419,26 @@ const styles = {
     fontSize: '16px',
     transition: 'all 0.3s ease',
     boxSizing: 'border-box',
+  },
+  select: {
+    width: '100%',
+    paddingLeft: '48px',
+    paddingRight: '16px',
+    paddingTop: '12px',
+    paddingBottom: '12px',
+    background: 'rgba(255, 255, 255, 0.1)',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    borderRadius: '12px',
+    color: 'white',
+    fontSize: '16px',
+    transition: 'all 0.3s ease',
+    boxSizing: 'border-box',
+    cursor: 'pointer',
+    appearance: 'none',
+    backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'white\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")',
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 16px center',
+    backgroundSize: '20px',
   },
   errorContainer: {
     display: 'flex',
@@ -350,10 +495,15 @@ const styles = {
     marginTop: '24px',
     textAlign: 'center',
   },
-  link: {
+  linkText: {
     fontSize: '14px',
     color: '#e9d5ff',
+    margin: 0,
+  },
+  link: {
+    color: '#e9d5ff',
     textDecoration: 'none',
+    fontWeight: '600',
     transition: 'color 0.3s ease',
   },
   footer: {
@@ -369,4 +519,4 @@ const styles = {
   },
 };
 
-export default LoginPage;
+export default RegisterPage;

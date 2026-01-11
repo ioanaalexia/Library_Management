@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { User, Book, Calendar, Clock, LogOut, Mail, Phone, MapPin, BookOpen, CheckCircle, AlertCircle } from 'lucide-react';
 
 const ProfilePage = () => {
-  // Date demo pentru utilizator
   const [userData] = useState({
     name: 'Popa Alexia',
     email: 'alexia.popa@email.com',
@@ -13,7 +12,6 @@ const ProfilePage = () => {
     currentlyBorrowed: 3,
   });
 
-  // Date demo pentru împrumuturi active
   const [activeLoans] = useState([
     {
       id: 1,
@@ -45,9 +43,7 @@ const ProfilePage = () => {
   ]);
 
   const handleLogout = () => {
-    // Aici vei adăuga logica de logout
-    // localStorage.removeItem('token');
-    // navigate('/login');
+    // logica de logout
     alert('Deconectare...');
   };
 
@@ -115,13 +111,12 @@ const ProfilePage = () => {
       </div>
 
       <div style={styles.mainContent}>
-        {/* Cards cu statistici */}
         <div style={styles.statsGrid}>
           <div style={styles.statCard}>
             <BookOpen size={32} color="#776248ff" style={styles.statIcon} />
             <div>
               <p style={styles.statValue}>{userData.totalBorrowedBooks}</p>
-              <p style={styles.statLabel}>Total cărți împrumutate</p>
+              <p style={styles.statLabel}>Total carti imprumutate</p>
             </div>
           </div>
 
@@ -129,7 +124,7 @@ const ProfilePage = () => {
             <Book size={32} color="#776248ff" style={styles.statIcon} />
             <div>
               <p style={styles.statValue}>{userData.currentlyBorrowed}</p>
-              <p style={styles.statLabel}>Împrumuturi active</p>
+              <p style={styles.statLabel}>Imprumuturi active</p>
             </div>
           </div>
 
@@ -144,7 +139,7 @@ const ProfilePage = () => {
 
         <div style={styles.contentGrid}>
           <div style={styles.section}>
-            <h2 style={styles.sectionTitle}>Informații Personale</h2>
+            <h2 style={styles.sectionTitle}>Informatii Personale</h2>
             <div style={styles.card}>
               <div style={styles.infoItem}>
                 <div style={styles.infoIcon}>
@@ -181,7 +176,7 @@ const ProfilePage = () => {
                   <MapPin size={20} color="#10b981" />
                 </div>
                 <div style={styles.infoContent}>
-                  <p style={styles.infoLabel}>Adresă</p>
+                  <p style={styles.infoLabel}>Adresa</p>
                   <p style={styles.infoValue}>{userData.address}</p>
                 </div>
               </div>
@@ -197,14 +192,13 @@ const ProfilePage = () => {
                   e.target.style.transform = 'translateY(0)';
                 }}
               >
-                Editează profilul
+                Editeaza profilul
               </button>
             </div>
           </div>
 
-          {/* Lista de împrumuturi active */}
           <div style={styles.section}>
-            <h2 style={styles.sectionTitle}>Împrumuturi Active</h2>
+            <h2 style={styles.sectionTitle}>Imprumuturi Active</h2>
             <div style={styles.loansContainer}>
               {activeLoans.map((loan) => {
                 const statusInfo = getStatusInfo(loan);
@@ -262,7 +256,7 @@ const ProfilePage = () => {
                         e.target.style.background = 'white';
                       }}
                     >
-                      Returnează cartea
+                      Returneaza cartea
                     </button>
                   </div>
                 );
