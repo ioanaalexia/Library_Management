@@ -41,11 +41,15 @@ const typeDefs = gql`
     book(id: ID!): Book
     loans: [Loan!]!
     paginatedBooks(page: Int!, limit: Int!): [Book!]!
+    users: [User!]!
+    me: User
+
   }
 
   # Mutations
   type Mutation {
     login(username: String!, password: String!): String!
+    register(username: String!, password: String!, role: Role!): User!
 
     addBook(
       title: String!

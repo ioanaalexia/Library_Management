@@ -4,6 +4,8 @@ const loans = [];
 
 const resolvers = {
   Query: {
+    users: () => users,
+    me: (_, __, context) => context.user,
     books: () => books,
 
     booksByFilter: (_, { category, status }) => {
@@ -25,15 +27,33 @@ const resolvers = {
   },
 
   Mutation: {
+    register: (_, { username, password, role }) => {
+      if (!username || !password || !role) {
+        throw new Error("Required fields cannot be null");
+      }
+      const existingUser = users.find(u => u.username === username);
+      if (existingUser) throw new Error("User already exists");
+
+      const user = { id: String(users.length + 1), username, password, role };
+      users.push(user);
+      return user;
+    },
+
     login: (_, { username, password }) => {
-      if (!username || !password) {
+      const user = users.find(u => u.username === username && u.password === password);
+      if (!user) {
         throw new Error("Invalid authentication");
       }
-      return "mock-jwt-token";
+      return user.username;
     },
 
     addBook: (_, { title, author, category }) => {
+      if (!context.user || context.user.role !== 'ADMIN') {
+        throw new Error("Unauthorized");
+      }
+
       if (!title || !author || !category) {
+
         throw new Error("Required fields cannot be null");
       }
 
@@ -58,6 +78,11 @@ const resolvers = {
     },
 
     deleteBook: (_, { id }) => {
+      if (!context.user || context.user.role !== 'ADMIN') {
+        throw new Error("Unauthorized");
+      }
+      
+
       const index = books.findIndex(b => b.id === id);
       if (index === -1) return false;
 
@@ -67,7 +92,9 @@ const resolvers = {
 
     borrowBook: (_, { bookId, userId }) => {
       const book = books.find(b => b.id === bookId);
-      if (!book) throw new Error("Book not found");
+      const user = users.find(u => u.id === userId);
+      
+      if (!book || !user) throw new Error("Book or User not found");
 
       if (book.status === "BORROWED") {
         throw new Error("Book already borrowed");
@@ -77,7 +104,7 @@ const resolvers = {
 
       const loan = {
         id: String(loans.length + 1),
-        user: { id: userId, username: "mockUser", role: "MEMBER" },
+        user,
         book,
         borrowedAt: new Date().toISOString(),
         returnedAt: null
