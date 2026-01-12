@@ -1,0 +1,23 @@
+[
+  {
+    "id": "1",
+    "title": "Clean Code",
+    "author": "Robert C. Martin",
+    "category": "Programming",
+    "status": "BORROWED"
+  },
+  {
+    "id": "2",
+    "title": "The Pragmatic Programmer",
+    "author": "Andrew Hunt, David Thomas",
+    "category": "Programming",
+    "status": "BORROWED"
+  },
+  {
+    "id": "3",
+    "title": "Design Patterns",
+    "author": "Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides",
+    "category": "Software Engineering",
+    "status": "AVAILABLE"
+  }
+]

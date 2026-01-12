@@ -1,50 +1,52 @@
-import React, { useState } from 'react';
+import React, { useContext } from 'react';
 import { User, Book, Calendar, Clock, LogOut, Mail, Phone, MapPin, BookOpen, CheckCircle, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery, gql } from '@apollo/client';
+
+const GET_USER_DATA = gql`
+  query GetUserData($username: String!) {
+    user(username: $username) {
+      name
+      email
+      phone
+      address
+      memberSince
+      totalBorrowedBooks
+      currentlyBorrowed
+      activeLoans {
+        id
+        book {
+          title
+        }
+      }
+    }
+  }
+`;
 
 const ProfilePage = () => {
-  const [userData] = useState({
-    name: 'Popa Alexia',
-    email: 'alexia.popa@email.com',
-    phone: '+40 712 345 678',
-    address: 'Iași, România',
-    memberSince: '15 Ianuarie 2024',
-    totalBorrowedBooks: 24,
-    currentlyBorrowed: 3,
+  const navigate = useNavigate();
+
+  const username = localStorage.getItem('username') || '';
+  if (!username) {
+    return <p>Nu ești logat!</p>;
+  }
+  const { data, loading, error } = useQuery(GET_USER_DATA, {
+    variables: { username },
   });
 
-  const [activeLoans] = useState([
-    {
-      id: 1,
-      bookTitle: 'Pădurea Spânzuraților',
-      author: 'Liviu Rebreanu',
-      borrowDate: '2025-01-05',
-      dueDate: '2025-01-19',
-      status: 'active',
-      coverColor: '#9333ea',
-    },
-    {
-      id: 2,
-      bookTitle: 'Moromeții',
-      author: 'Marin Preda',
-      borrowDate: '2025-01-03',
-      dueDate: '2025-01-17',
-      status: 'overdue',
-      coverColor: '#ec4899',
-    },
-    {
-      id: 3,
-      bookTitle: 'Ion',
-      author: 'Liviu Rebreanu',
-      borrowDate: '2025-01-08',
-      dueDate: '2025-01-22',
-      status: 'active',
-      coverColor: '#6366f1',
-    },
-  ]);
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error.message}</p>;
+
+  const userData = data.user;
 
   const handleLogout = () => {
-    // logica de logout
-    alert('Deconectare...');
+    localStorage.removeItem('username'); // Remove the username from local storage
+    localStorage.removeItem('userId'); // Remove the userId from local storage
+    navigate('/login'); // Redirect to the login page
+  };
+
+  const handleNavigateToProfile = () => {
+    navigate('/profile'); // Navigate to the profile page
   };
 
   const getDaysRemaining = (dueDate) => {
@@ -79,6 +81,8 @@ const ProfilePage = () => {
     }
   };
 
+  const activeLoans = data.user.activeLoans || []; // Obține împrumuturile active din datele utilizatorului
+
   return (
     <div style={styles.pageContainer}>
       <div style={styles.header}>
@@ -112,29 +116,22 @@ const ProfilePage = () => {
 
       <div style={styles.mainContent}>
         <div style={styles.statsGrid}>
-          <div style={styles.statCard}>
-            <BookOpen size={32} color="#776248ff" style={styles.statIcon} />
-            <div>
-              <p style={styles.statValue}>{userData.totalBorrowedBooks}</p>
-              <p style={styles.statLabel}>Total carti imprumutate</p>
-            </div>
-          </div>
 
           <div style={styles.statCard}>
             <Book size={32} color="#776248ff" style={styles.statIcon} />
             <div>
-              <p style={styles.statValue}>{userData.currentlyBorrowed}</p>
-              <p style={styles.statLabel}>Imprumuturi active</p>
+              <p style={styles.statValue}>{activeLoans.length}</p>
+              <p style={styles.statLabel}>Cărți împrumutate</p>
             </div>
           </div>
 
-          <div style={styles.statCard}>
+          {/* <div style={styles.statCard}>
             <Calendar size={32} color="#776248ff" style={styles.statIcon} />
             <div>
               <p style={styles.statValue}>{userData.memberSince}</p>
               <p style={styles.statLabel}>Membru din</p>
             </div>
-          </div>
+          </div> */}
         </div>
 
         <div style={styles.contentGrid}>
@@ -161,7 +158,7 @@ const ProfilePage = () => {
                 </div>
               </div>
 
-              <div style={styles.infoItem}>
+              {/* <div style={styles.infoItem}>
                 <div style={styles.infoIcon}>
                   <Phone size={20} color="#6366f1" />
                 </div>
@@ -179,89 +176,75 @@ const ProfilePage = () => {
                   <p style={styles.infoLabel}>Adresa</p>
                   <p style={styles.infoValue}>{userData.address}</p>
                 </div>
-              </div>
-
-              <button 
-                style={styles.editButton}
-                onMouseEnter={(e) => {
-                  e.target.style.background = 'linear-gradient(to right, #7c3aed, #db2777)';
-                  e.target.style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = 'linear-gradient(to right, #9333ea, #ec4899)';
-                  e.target.style.transform = 'translateY(0)';
-                }}
-              >
-                Editeaza profilul
-              </button>
+              </div> */}
+              
             </div>
           </div>
 
           <div style={styles.section}>
             <h2 style={styles.sectionTitle}>Imprumuturi Active</h2>
             <div style={styles.loansContainer}>
-              {activeLoans.map((loan) => {
-                const statusInfo = getStatusInfo(loan);
-                return (
-                  <div 
-                    key={loan.id} 
-                    style={styles.loanCard}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-4px)';
-                      e.currentTarget.style.boxShadow = '0 12px 24px rgba(0, 0, 0, 0.15)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
-                    }}
-                  >
-                    <div style={styles.loanHeader}>
-                      <div style={{...styles.bookCover, background: loan.coverColor}}>
-                        <Book size={24} color="white" />
-                      </div>
-                      <div style={styles.loanInfo}>
-                        <h3 style={styles.bookTitle}>{loan.bookTitle}</h3>
-                        <p style={styles.bookAuthor}>{loan.author}</p>
-                      </div>
-                    </div>
+  {activeLoans.length === 0 && <p>Nu ai împrumuturi active.</p>}
+  
+  {activeLoans.map((loan) => {
+    const statusInfo = getStatusInfo(loan);
+    return (
+      <div 
+        key={loan.id} 
+        style={styles.loanCard}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-4px)';
+          e.currentTarget.style.boxShadow = '0 12px 24px rgba(0, 0, 0, 0.15)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+        }}
+      >
+        <div style={styles.loanHeader}>
+          <div style={{ ...styles.bookCover, background: loan.book.coverColor || '#776248' }}>
+            <Book size={24} color="white" />
+          </div>
+          <div style={styles.loanInfo}>
+            <h3 style={styles.bookTitle}>{loan.book.title}</h3>
+            <p style={styles.bookAuthor}>{loan.book.author}</p>
+          </div>
+        </div>
 
-                    <div style={styles.loanDetails}>
-                      <div style={styles.dateInfo}>
-                        <Calendar size={16} color="#6b7280" />
-                        <span style={styles.dateText}>
-                          Împrumutat: {new Date(loan.borrowDate).toLocaleDateString('ro-RO')}
-                        </span>
-                      </div>
-                      <div style={styles.dateInfo}>
-                        <Clock size={16} color="#6b7280" />
-                        <span style={styles.dateText}>
-                          Returnare: {new Date(loan.dueDate).toLocaleDateString('ro-RO')}
-                        </span>
-                      </div>
-                    </div>
+        <div style={styles.loanDetails}>
+          <div style={styles.dateInfo}>
+            <Calendar size={16} color="#6b7280" />
+            <span style={styles.dateText}>
+              Împrumutat: {new Date(loan.borrowedAt).toLocaleDateString('ro-RO')}
+            </span>
+          </div>
+          <div style={styles.dateInfo}>
+            <Clock size={16} color="#6b7280" />
+            <span style={styles.dateText}>
+              Returnare: {new Date(loan.dueDate).toLocaleDateString('ro-RO')}
+            </span>
+          </div>
+        </div>
 
-                    <div style={{...styles.statusBadge, background: `${statusInfo.color}20`, border: `1px solid ${statusInfo.color}40`}}>
-                      <span style={{color: statusInfo.color, display: 'flex', alignItems: 'center', gap: '4px'}}>
-                        {statusInfo.icon}
-                        {statusInfo.text}
-                      </span>
-                    </div>
+        <div style={{ ...styles.statusBadge, background: `${statusInfo.color}20`, border: `1px solid ${statusInfo.color}40` }}>
+          <span style={{ color: statusInfo.color, display: 'flex', alignItems: 'center', gap: '4px' }}>
+            {statusInfo.icon}
+            {statusInfo.text}
+          </span>
+        </div>
 
-                    <button 
-                      style={styles.returnButton}
-                      onMouseEnter={(e) => {
-                        e.target.style.background = '#f3f4f6';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.background = 'white';
-                      }}
-                    >
-                      Returneaza cartea
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
+        <button 
+          style={styles.returnButton}
+          onClick={() => alert(`Ai returnat cartea: ${loan.book.title}`)}
+          onMouseEnter={(e) => { e.target.style.background = '#f3f4f6'; }}
+          onMouseLeave={(e) => { e.target.style.background = 'white'; }}
+        >
+          Returneaza cartea
+        </button>
+      </div>
+    );
+  })}
+</div>
           </div>
         </div>
       </div>

@@ -1,10 +1,40 @@
 [
   {
+    "id": "1",
     "username": "newuser",
-    "password": "password"
+    "password": "password",
+    "email": "password"
   },
   {
+    "id": "2",
     "username": "ioana",
-    "password": "ioanaaa"
+    "password": "ioanaaa",
+    "email": "ioana@gmail.com"
+  },
+  {
+    "id": "db90d32e-cc99-4ddd-bceb-9557edde7a74",
+    "username": "alexia1",
+    "password": "alexia123",
+    "email": "patrick1@gmail.com"
+  },
+  {
+    "id": "517a0369-0901-4470-a91c-d949bebf1ef8",
+    "username": "alexia",
+    "password": "alexiaaa"
+  },
+  {
+    "id": "0b14e79a-bc63-4f92-9db6-d04c8d16b540",
+    "username": "alexia123",
+    "password": "alexia123"
+  },
+  {
+    "id": "4b946240-d993-46b2-95c8-f96aca68a115",
+    "username": "utiliz",
+    "password": "utiliz123"
+  },
+  {
+    "id": "1e4ec95e-94a9-4256-88d7-43e014f52bf2",
+    "username": "utilizator",
+    "password": "utilizator123"
   }
 ]

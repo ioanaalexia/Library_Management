@@ -1,31 +1,27 @@
 import React, { useState } from 'react';
 import { BookOpen, Lock, User, AlertCircle } from 'lucide-react';
-import { useMutation } from '@apollo/client';
-import { LOGIN_MUTATION } from '../graphql/mutations';
+import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  const [login] = useMutation(LOGIN_MUTATION, {
-    onCompleted: (data) => {
-      localStorage.setItem('token', data.login); // Salvează token-ul
-      alert('Autentificare reușită!');
-    },
-    onError: (err) => {
-      setError(err.message); // Setează eroarea
-    }
-  });
+  const navigate = useNavigate();
 
   const handleSubmit = () => {
     if (username && password) {
       setLoading(true);
       setError(null);
-
-      login({ variables: { username, password } })
-        .finally(() => setLoading(false));
+      
+      // DEMO: Simulare autentificare
+      setTimeout(() => {
+        setLoading(false);
+        localStorage.setItem('username', username); // Salvează username-ul utilizatorului autentificat
+        localStorage.setItem('userId', '1'); // Salvează un userId fictiv pentru utilizatorul autentificat
+        alert('Autentificare reușită!');
+        navigate('/bookslist'); // Navigate to the books page on success
+      }, 1500);
     } else {
       setError('Te rugăm să completezi toate câmpurile.');
     }

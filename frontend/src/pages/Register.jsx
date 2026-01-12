@@ -58,7 +58,7 @@ const RegisterPage = () => {
         },
       });
       alert('Cont creat cu succes!');
-      navigate('/bookslist');
+      navigate('/login');
     } catch (err) {
       setError(err.message);
     }
@@ -269,6 +269,10 @@ const RegisterPage = () => {
               <a 
                 href="/login" 
                 style={styles.link}
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.location.href = '/login';
+                }}
                 onMouseEnter={(e) => e.target.style.color = 'white'}
                 onMouseLeave={(e) => e.target.style.color = '#e9d5ff'}
               >

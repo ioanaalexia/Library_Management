@@ -1,96 +1,114 @@
 import React, { useState, useEffect } from 'react';
 import { Book, Search, Filter, BookOpen, User, ShoppingCart, Heart, Eye, UserCircle, Plus, Edit2, Trash2, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery, gql, useMutation } from '@apollo/client';
+import { useApolloClient } from '@apollo/client';
+
+
+const GET_BOOKS = gql`
+  query GetBooks {
+    books {
+      id
+      title
+      author
+      category
+      status
+    }
+  }
+`;
+
+const BORROW_BOOK = gql`
+  mutation BorrowBook($bookId: ID!, $userId: String!) {
+    borrowBook(bookId: $bookId, userId: $userId) {
+      id
+      book {
+        title
+        status
+      }
+      user {
+        name   # <- aici înlocuim username cu name
+      }
+      borrowedAt
+    }
+  }
+`;
 
 const BooksPage = () => {
+    const client = useApolloClient(); // ✅ aici în corpul functional component
+
+  const { loading, error, data, refetch } = useQuery(GET_BOOKS);
+  const [borrowBook] = useMutation(BORROW_BOOK);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [userRole, setUserRole] = useState('MEMBER');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingBook, setEditingBook] = useState(null);
+  const [books, setBooks] = useState([]);
 
-  const [userRole, setUserRole] = useState('MEMBER'); // Rolul utilizatorului
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const role = localStorage.getItem('role'); // Recuperează rolul utilizatorului
+    const role = localStorage.getItem('role');
     if (role) {
       setUserRole(role);
     }
   }, []);
 
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editingBook, setEditingBook] = useState(null);
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      alert('Eroare: Utilizatorul nu este autentificat. Te rugam sa te loghezi.');
+      navigate('/login');
+    }
+  }, []);
 
-  const [books] = useState([
-    {
-      id: '1',
-      title: 'Pădurea Spânzuraților',
-      author: 'Liviu Rebreanu',
-      category: 'Roman Românesc',
-      status: 'AVAILABLE',
-      coverColor: '#9333ea',
-    },
-    {
-      id: '2',
-      title: 'Moromeții',
-      author: 'Marin Preda',
-      category: 'Roman Românesc',
-      status: 'BORROWED',
-      coverColor: '#ec4899',
-    },
-    {
-      id: '3',
-      title: 'Ion',
-      author: 'Liviu Rebreanu',
-      category: 'Roman Românesc',
-      status: 'AVAILABLE',
-      coverColor: '#6366f1',
-    },
-    {
-      id: '4',
-      title: 'Enigma Otiliei',
-      author: 'George Călinescu',
-      category: 'Roman Românesc',
-      status: 'AVAILABLE',
-      coverColor: '#10b981',
-    },
-    {
-      id: '5',
-      title: 'Baltagul',
-      author: 'Mihail Sadoveanu',
-      category: 'Nuvelă',
-      status: 'BORROWED',
-      coverColor: '#f59e0b',
-    },
-    {
-      id: '6',
-      title: 'Maitreyi',
-      author: 'Mircea Eliade',
-      category: 'Roman',
-      status: 'AVAILABLE',
-      coverColor: '#ef4444',
-    },
-  ]);
+  useEffect(() => {
+    if (data) {
+      setBooks(data.books);
+    }
+  }, [data]);
 
-  const categories = ['all', 'Roman Românesc', 'Roman', 'Nuvelă'];
-  const statuses = [
-    { value: 'all', label: 'Toate' },
-    { value: 'AVAILABLE', label: 'Disponibile' },
-    { value: 'BORROWED', label: 'Împrumutate' }
-  ];
+  const handleBorrow = async (bookId) => {
+  const userId = localStorage.getItem('userId');
+  if (!userId) {
+    alert('Utilizatorul nu este autentificat!');
+    return;
+  }
 
-  const filteredBooks = books.filter(book => {
-    const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         book.author.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || book.category === selectedCategory;
-    const matchesStatus = selectedStatus === 'all' || book.status === selectedStatus;
+  try {
+    console.log('Trimitem mutația...', { bookId, userId });
+    const res = await client.mutate({
+      mutation: BORROW_BOOK,
+      variables: { bookId: String(bookId), userId: String(userId) }
+    });
 
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
+    console.log('Rezultatul mutației:', res);
 
-  const handleBorrow = (bookId) => {
-    alert(`Împrumutare carte ID: ${bookId}`);
-  };
+    setBooks(prevBooks =>
+      prevBooks.map(b =>
+        b.id === bookId ? { ...b, status: 'BORROWED' } : b
+      )
+    );
+
+    alert(`Cartea "${res.data.borrowBook.book.title}" a fost împrumutată!`);
+  } catch (error) {
+    console.error('Eroare la mutație:', error);
+    if (error.networkError && error.networkError.result) {
+      console.error('Detalii server:', error.networkError.result);
+      alert('Eroare server: ' + JSON.stringify(error.networkError.result.errors));
+    } else if (error.graphQLErrors) {
+      console.error('GraphQL Errors:', error.graphQLErrors);
+      alert('Eroare GraphQL: ' + JSON.stringify(error.graphQLErrors));
+    } else {
+      alert('Nu s-a putut împrumuta cartea!');
+    }
+  }
+};
 
   const goToProfile = () => {
-    alert('Navigare către profil...');
+    navigate('/profile'); // Navigate to the profile page
   };
 
   const handleAddBook = () => {
@@ -138,6 +156,25 @@ const BooksPage = () => {
       };
     }
   };
+
+  const categories = ['all', 'Roman Românesc', 'Roman', 'Nuvelă'];
+  const statuses = [
+    { value: 'all', label: 'Toate' },
+    { value: 'AVAILABLE', label: 'Disponibile' },
+    { value: 'BORROWED', label: 'Împrumutate' }
+  ];
+
+  const filteredBooks = books.filter(book => {
+    const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         book.author.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || book.category === selectedCategory;
+    const matchesStatus = selectedStatus === 'all' || book.status === selectedStatus;
+
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
+
+  if (loading) return <p>Se încarcă...</p>;
+  if (error) return <p>Eroare la încărcarea datelor!</p>;
 
   return (
     <div style={styles.pageContainer}>
@@ -529,11 +566,6 @@ const styles = {
     padding: '40px 20px',
   },
   filtersContainer: {
-    background: 'white',
-    borderRadius: '16px',
-    padding: '24px',
-    marginBottom: '30px',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
   },
   searchBox: {
     position: 'relative',
