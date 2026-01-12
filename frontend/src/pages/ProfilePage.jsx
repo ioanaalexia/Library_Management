@@ -1,37 +1,60 @@
 import React, { useContext } from 'react';
 import { User, Book, Calendar, Clock, LogOut, Mail, Phone, MapPin, BookOpen, CheckCircle, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, gql } from '@apollo/client';
-
+import { useQuery, gql, useMutation } from '@apollo/client';
 const GET_USER_DATA = gql`
-  query GetUserData($username: String!) {
-    user(username: $username) {
-      name
+  query GetUserData($id: ID!) {
+    user(id: $id) {
+      username
       email
-      phone
-      address
-      memberSince
-      totalBorrowedBooks
-      currentlyBorrowed
       activeLoans {
-        id
         book {
+          id
           title
+          author
         }
+        borrowedAt
+        dueDate
       }
     }
   }
 `;
 
-const ProfilePage = () => {
-  const navigate = useNavigate();
+const RETURN_BOOK = gql`
+  mutation ReturnBook($bookId: ID!, $userId: ID!) {
+    returnBook(bookId: $bookId, userId: $userId)
+  }
+`;
 
+const ProfilePage = () => {
+  
+  const navigate = useNavigate();
+  const userId = localStorage.getItem('userId');
+  
+
+
+const [returnBook] = useMutation(RETURN_BOOK);
+const goToBooks = () => navigate('/bookslist');
+
+const handleReturn = async (bookId) => {
+  try {
+    await returnBook({ 
+      variables: { bookId, userId },
+      //force the cache to clear for these specific queries
+      refetchQueries: [{ query: GET_USER_DATA, variables: { id: userId } }] 
+    });
+    alert("Carte returnată cu succes!");
+  } catch (err) {
+    alert("Eroare la returnare: " + err.message);
+  }
+};
   const username = localStorage.getItem('username') || '';
   if (!username) {
     return <p>Nu ești logat!</p>;
   }
-  const { data, loading, error } = useQuery(GET_USER_DATA, {
-    variables: { username },
+const { data, loading, error } = useQuery(GET_USER_DATA, {
+    variables: { id: userId },
+    skip: !userId 
   });
 
   if (loading) return <p>Loading...</p>;
@@ -40,13 +63,13 @@ const ProfilePage = () => {
   const userData = data.user;
 
   const handleLogout = () => {
-    localStorage.removeItem('username'); // Remove the username from local storage
-    localStorage.removeItem('userId'); // Remove the userId from local storage
-    navigate('/login'); // Redirect to the login page
+    localStorage.removeItem('username');
+    localStorage.removeItem('userId');
+    navigate('/login');
   };
 
   const handleNavigateToProfile = () => {
-    navigate('/profile'); // Navigate to the profile page
+    navigate('/profile'); 
   };
 
   const getDaysRemaining = (dueDate) => {
@@ -81,19 +104,22 @@ const ProfilePage = () => {
     }
   };
 
-  const activeLoans = data.user.activeLoans || []; // Obține împrumuturile active din datele utilizatorului
+  const activeLoans = data.user.activeLoans || [];
 
   return (
     <div style={styles.pageContainer}>
       <div style={styles.header}>
         <div style={styles.headerContent}>
           <div style={styles.headerLeft}>
+            <button onClick={goToBooks} style={styles.backButton}>
+              <BookOpen size={20} /> Lista Carti
+            </button>
             <div style={styles.avatarContainer}>
               <User size={40} color="white" />
             </div>
             <div>
               <h1 style={styles.headerTitle}>Profilul Meu</h1>
-              <p style={styles.headerSubtitle}>Bine ai revenit, {userData.name.split(' ')[0]}!</p>
+              <p style={styles.headerSubtitle}>Bine ai revenit, {userData.username}!</p>
             </div>
           </div>
           <button 
@@ -144,7 +170,7 @@ const ProfilePage = () => {
                 </div>
                 <div style={styles.infoContent}>
                   <p style={styles.infoLabel}>Nume complet</p>
-                  <p style={styles.infoValue}>{userData.name}</p>
+                  <p style={styles.infoValue}>{userData.username}</p>
                 </div>
               </div>
 
@@ -153,8 +179,8 @@ const ProfilePage = () => {
                   <Mail size={20} color="#ec4899" />
                 </div>
                 <div style={styles.infoContent}>
-                  <p style={styles.infoLabel}>Email</p>
-                  <p style={styles.infoValue}>{userData.email}</p>
+                  <p style={styles.infoLabel}>Adresa Email</p>
+                  <p style={styles.infoValue}>{userData.email || "Email nespecificat"}</p>
                 </div>
               </div>
 
@@ -234,13 +260,13 @@ const ProfilePage = () => {
         </div>
 
         <button 
-          style={styles.returnButton}
-          onClick={() => alert(`Ai returnat cartea: ${loan.book.title}`)}
-          onMouseEnter={(e) => { e.target.style.background = '#f3f4f6'; }}
-          onMouseLeave={(e) => { e.target.style.background = 'white'; }}
-        >
-          Returneaza cartea
-        </button>
+        style={styles.returnButton}
+        onClick={() => handleReturn(loan.book.id)}
+        onMouseEnter={(e) => { e.target.style.background = '#f3f4f6'; }}
+        onMouseLeave={(e) => { e.target.style.background = 'white'; }}
+      >
+        Returneaza cartea
+      </button>
       </div>
     );
   })}
@@ -253,6 +279,19 @@ const ProfilePage = () => {
 };
 
 const styles = {
+  backButton: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '8px 16px',
+    background: 'rgba(255, 255, 255, 0.2)',
+    border: 'none',
+    borderRadius: '8px',
+    color: 'white',
+    cursor: 'pointer',
+    marginRight: '20px',
+    fontWeight: '500'
+  },
   pageContainer: {
     minHeight: '100vh',
     background: 'linear-gradient(to bottom, #f9fafb, #f3f4f6)',

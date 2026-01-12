@@ -4,8 +4,8 @@ import { BookOpen, Lock, User, AlertCircle, Mail, Phone, MapPin } from 'lucide-r
 import { useNavigate } from 'react-router-dom';
 
 const REGISTER_MUTATION = gql`
-  mutation Register($username: String!, $password: String!) {
-    register(username: $username, password: $password)
+  mutation Register($username: String!, $password: String!, $email: String!) {
+    register(username: $username, password: $password, email: $email)
   }
 `;
 
@@ -13,8 +13,8 @@ const RegisterPage = () => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
-    phone: '',
-    address: '',
+    // phone: '',
+    // address: '',
     password: '',
     confirmPassword: '',
     role: 'MEMBER',
@@ -51,17 +51,18 @@ const RegisterPage = () => {
     }
 
     try {
-      await register({
-        variables: {
-          username: formData.username,
-          password: formData.password,
-        },
-      });
-      alert('Cont creat cu succes!');
-      navigate('/login');
-    } catch (err) {
-      setError(err.message);
-    }
+        await register({
+          variables: {
+            username: formData.username,
+            password: formData.password,
+            email: formData.email,
+          },
+        });
+        alert('Cont creat cu succes!');
+        navigate('/login');
+      } catch (err) {
+        setError(err.message);
+      }
   };
 
   const handleKeyPress = (e) => {
@@ -125,7 +126,7 @@ const RegisterPage = () => {
               />
             </div>
 
-            <div style={styles.inputGroup}>
+            {/* <div style={styles.inputGroup}>
               <div style={styles.iconContainer}>
                 <Phone size={20} color="#d8b4fe" />
               </div>
@@ -140,9 +141,9 @@ const RegisterPage = () => {
                 onFocus={(e) => e.target.style.outline = '2px solid #a855f7'}
                 onBlur={(e) => e.target.style.outline = 'none'}
               />
-            </div>
+            </div> */}
 
-            <div style={styles.inputGroup}>
+            {/* <div style={styles.inputGroup}>
               <div style={styles.iconContainer}>
                 <MapPin size={20} color="#d8b4fe" />
               </div>
@@ -157,23 +158,13 @@ const RegisterPage = () => {
                 onFocus={(e) => e.target.style.outline = '2px solid #a855f7'}
                 onBlur={(e) => e.target.style.outline = 'none'}
               />
-            </div>
+            </div> */}
 
             <div style={styles.inputGroup}>
               <div style={styles.iconContainer}>
                 <User size={20} color="#d8b4fe" />
               </div>
-              <select
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                style={styles.select}
-                onFocus={(e) => e.target.style.outline = '2px solid #a855f7'}
-                onBlur={(e) => e.target.style.outline = 'none'}
-              >
-                <option value="MEMBER">Membru</option>
-                <option value="ADMIN">Administrator</option>
-              </select>
+              
             </div>
 
             <div style={styles.inputGroup}>

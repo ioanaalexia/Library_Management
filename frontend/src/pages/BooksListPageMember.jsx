@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Book, Search, Filter, BookOpen, User, ShoppingCart, Heart, Eye, UserCircle, Plus, Edit2, Trash2, X } from 'lucide-react';
+import { Book, Search, Filter, BookOpen, User, ShoppingCart, Heart, Eye, UserCircle, Plus, LogOut, Edit2, Trash2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, gql, useMutation } from '@apollo/client';
 import { useApolloClient } from '@apollo/client';
@@ -18,23 +18,43 @@ const GET_BOOKS = gql`
 `;
 
 const BORROW_BOOK = gql`
-  mutation BorrowBook($bookId: ID!, $userId: String!) {
+  mutation BorrowBook($bookId: ID!, $userId: ID!) { # Changed String! to ID!
     borrowBook(bookId: $bookId, userId: $userId) {
       id
       book {
+        id      # Added id for cache consistency
         title
         status
       }
-      user {
-        name   # <- aici înlocuim username cu name
-      }
       borrowedAt
+      dueDate   # Added this to match the backend Loan type
+      # REMOVED the 'user' field entirely because it's not in your backend 'Loan' type
     }
   }
 `;
 
+const ADD_BOOK = gql`
+  mutation AddBook($title: String!, $author: String!, $category: String!) {
+    addBook(title: $title, author: $author, category: $category) { id title }
+  }
+`;
+
+const UPDATE_BOOK = gql`
+  mutation UpdateBook($id: ID!, $title: String, $author: String, $category: String, $status: String) {
+    updateBook(id: $id, title: $title, author: $author, category: $category, status: $status) {
+      id
+      title
+      status
+    }
+  }
+`;
+
+const DELETE_BOOK = gql`
+  mutation DeleteBook($id: ID!) { deleteBook(id: $id) }
+`;
+
 const BooksPage = () => {
-    const client = useApolloClient(); // ✅ aici în corpul functional component
+    const client = useApolloClient(); 
 
   const { loading, error, data, refetch } = useQuery(GET_BOOKS);
   const [borrowBook] = useMutation(BORROW_BOOK);
@@ -46,9 +66,23 @@ const BooksPage = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
   const [books, setBooks] = useState([]);
+  const [addBook] = useMutation(ADD_BOOK);
+  const [deleteBook] = useMutation(DELETE_BOOK);
+  const [updateBook] = useMutation(UPDATE_BOOK);
 
   const navigate = useNavigate();
 
+
+  
+  const handleDeleteBook = async (bookId) => {
+  if (window.confirm('Esti sigur ca vrei sa stergi aceasta carte?')) {
+    try {
+      await deleteBook({ variables: { id: bookId } });
+      setBooks(books.filter(b => b.id !== bookId)); // UI update
+      alert("Carte ștearsă!");
+    } catch (e) { alert("Eroare la ștergere"); }
+  }
+};
   useEffect(() => {
     const role = localStorage.getItem('role');
     if (role) {
@@ -81,7 +115,7 @@ const BooksPage = () => {
     console.log('Trimitem mutația...', { bookId, userId });
     const res = await client.mutate({
       mutation: BORROW_BOOK,
-      variables: { bookId: String(bookId), userId: String(userId) }
+      variables: { bookId: String(bookId), userId: localStorage.getItem('userId') }
     });
 
     console.log('Rezultatul mutației:', res);
@@ -117,44 +151,68 @@ const BooksPage = () => {
 
   const handleEditBook = (book) => {
     setEditingBook(book);
+    setBookFormData({
+      title: book.title,
+      author: book.author,
+      category: book.category,
+      status: book.status
+    });
     setShowAddModal(true);
   };
 
-  const handleDeleteBook = (bookId) => {
-    if (window.confirm('Esti sigur ca vrei sa stergi aceasta carte?')) {
-      alert(`Carte ștearsă: ${bookId}`);
-    }
-  };
 
-  const handleSaveBook = () => {
+
+  const handleSaveBook = async () => {
+  const { title, author, category, status } = bookFormData;
+
+  if (!title || !author) {
+    alert("Titlul și autorul sunt obligatorii!");
+    return;
+  }
+
+  try {
     if (editingBook) {
+      await updateBook({
+        variables: { id: editingBook.id, title, author, category, status },
+      });
       alert('Carte actualizată!');
     } else {
+      await addBook({
+        variables: { title, author, category },
+      });
       alert('Carte adăugată!');
     }
-    setShowAddModal(false);
-    setEditingBook(null);
-  };
+    
+    await refetch();
+    handleCloseModal();
+  } catch (err) {
+    alert("Eroare: " + err.message);
+  }
+};
 
-  const handleCloseModal = () => {
-    setShowAddModal(false);
-    setEditingBook(null);
-  };
+  const [bookFormData, setBookFormData] = useState({
+  title: '',
+  author: '',
+  category: '',
+  status: 'AVAILABLE'
+});
+
+const handleCloseModal = () => {
+  setShowAddModal(false);
+  setEditingBook(null);
+  setBookFormData({ title: '', author: '', category: '', status: 'AVAILABLE' });
+};
 
   const getStatusBadge = (status) => {
     if (status === 'AVAILABLE') {
-      return {
-        text: 'Disponibila',
-        color: '#10b981',
-        bg: 'rgba(16, 185, 129, 0.1)'
-      };
-    } else if (status === 'BORROWED') {
-      return {
-        text: 'Imprumutata',
-        color: '#ef4444',
-        bg: 'rgba(239, 68, 68, 0.1)'
-      };
-    }
+      return { text: 'Disponibila', color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' };
+    } 
+    // Safety fallback: if status is 'BORROWED' or anything else, show red
+    return {
+      text: status === 'BORROWED' ? 'Imprumutata' : 'Indisponibila',
+      color: '#ef4444',
+      bg: 'rgba(239, 68, 68, 0.1)'
+    };
   };
 
   const categories = ['all', 'Roman Românesc', 'Roman', 'Nuvelă'];
@@ -193,38 +251,21 @@ const BooksPage = () => {
           </div>
 
           <div style={styles.headerActions}>
-            {userRole === 'ADMIN' && (
-              <button 
-                onClick={handleAddBook}
-                style={styles.addButton}
-                onMouseEnter={(e) => {
-                  e.target.style.background = 'linear-gradient(to right, #7c3aed, #db2777)';
-                  e.target.style.transform = 'scale(1.05)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = 'linear-gradient(to right, #9333ea, #ec4899)';
-                  e.target.style.transform = 'scale(1)';
-                }}
-              >
-                <Plus size={20} />
-                <span>Adaugă carte</span>
-              </button>
-            )}
-            
-            {userRole === 'MEMBER' && (
-              <button 
-                onClick={goToProfile}
-                style={styles.profileButton}
-                onMouseEnter={(e) => {
-                  e.target.style.background = 'rgba(255, 255, 255, 0.2)';
-                  e.target.style.transform = 'scale(1.05)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = 'rgba(255, 255, 255, 0.1)';
-                  e.target.style.transform = 'scale(1)';
-                }}
-              >
-                <UserCircle size={24} />
+            {userRole === 'ADMIN' ? (
+              <>
+                <button onClick={handleAddBook} style={styles.addButton}>
+                  <Plus size={20} /> Adaugă carte
+                </button>
+                <button 
+                  onClick={() => { localStorage.clear(); navigate('/login'); }} 
+                  style={styles.profileButton}
+                >
+                  <LogOut size={20} /> Deconectare
+                </button>
+              </>
+            ) : (
+              <button onClick={goToProfile} style={styles.profileButton}>
+                <UserCircle size={24} /> 
                 <span>Profilul meu</span>
               </button>
             )}
@@ -277,7 +318,9 @@ const BooksPage = () => {
 
         <div style={styles.booksGrid}>
           {filteredBooks.map((book) => {
+
             const statusBadge = getStatusBadge(book.status);
+              
             return (
               <div 
                 key={book.id} 
@@ -307,8 +350,8 @@ const BooksPage = () => {
 
                 <div style={styles.bookContent}>
                   <div style={{...styles.statusBadge, background: statusBadge.bg, color: statusBadge.color}}>
-                    {statusBadge.text}
-                  </div>
+                      {statusBadge.text}
+                    </div>
 
                   <h3 style={styles.bookTitle}>{book.title}</h3>
                   <p style={styles.bookAuthor}>
@@ -430,7 +473,10 @@ const BooksPage = () => {
                 <input
                   type="text"
                   placeholder="Titlul cărții"
-                  defaultValue={editingBook?.title}
+                  // defaultValue={editingBook?.title}
+                  // style={styles.modalInput}
+                  value={bookFormData.title}
+                  onChange={(e) => setBookFormData({...bookFormData, title: e.target.value})}
                   style={styles.modalInput}
                 />
               </div>
@@ -440,7 +486,8 @@ const BooksPage = () => {
                 <input
                   type="text"
                   placeholder="Numele autorului"
-                  defaultValue={editingBook?.author}
+                  value={bookFormData.author}
+                  onChange={(e) => setBookFormData({...bookFormData, author: e.target.value})}
                   style={styles.modalInput}
                 />
               </div>
@@ -449,8 +496,9 @@ const BooksPage = () => {
                 <label style={styles.label}>Categorie *</label>
                 <input
                   type="text"
-                  placeholder="Ex: Román Românesc"
-                  defaultValue={editingBook?.category}
+                  placeholder="Ex: Roman Românesc"
+                  value={bookFormData.category}
+                  onChange={(e) => setBookFormData({...bookFormData, category: e.target.value})}
                   style={styles.modalInput}
                 />
               </div>

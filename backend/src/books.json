@@ -1,23 +1,30 @@
 [
   {
-    "id": "1",
-    "title": "Clean Code",
-    "author": "Robert C. Martin",
-    "category": "Programming",
+    "id": "4",
+    "title": "Introduction to Algorithms",
+    "author": "Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, Clifford Stein",
+    "category": "Algorithms",
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "6",
+    "title": "JavaScript",
+    "author": "Marijn Haverbeke",
+    "category": "JavaScript",
+    "status": "AVAILABLE"
+  },
+  {
+    "id": "7",
+    "title": "Ion",
+    "author": "Liviu Rebreanu",
+    "category": "Roman Romanesc",
     "status": "BORROWED"
   },
   {
-    "id": "2",
-    "title": "The Pragmatic Programmer",
-    "author": "Andrew Hunt, David Thomas",
-    "category": "Programming",
-    "status": "BORROWED"
-  },
-  {
-    "id": "3",
-    "title": "Design Patterns",
-    "author": "Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides",
-    "category": "Software Engineering",
+    "id": "8",
+    "title": "Baltagul",
+    "author": "Mihail Sadoveanu",
+    "category": "Nuvela",
     "status": "AVAILABLE"
   }
 ]

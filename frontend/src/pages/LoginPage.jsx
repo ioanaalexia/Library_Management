@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
 import { BookOpen, Lock, User, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation, gql } from '@apollo/client';
 
+const LOGIN_MUTATION = gql`
+  mutation Login($username: String!, $password: String!) {
+    login(username: $username, password: $password) {
+      id
+      username
+      role    
+    }
+  }
+`;
 const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -9,23 +19,17 @@ const LoginPage = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const handleSubmit = () => {
-    if (username && password) {
-      setLoading(true);
-      setError(null);
-      
-      // DEMO: Simulare autentificare
-      setTimeout(() => {
-        setLoading(false);
-        localStorage.setItem('username', username); // Salvează username-ul utilizatorului autentificat
-        localStorage.setItem('userId', '1'); // Salvează un userId fictiv pentru utilizatorul autentificat
-        alert('Autentificare reușită!');
-        navigate('/bookslist'); // Navigate to the books page on success
-      }, 1500);
-    } else {
-      setError('Te rugăm să completezi toate câmpurile.');
-    }
-  };
+  const [loginMutation] = useMutation(LOGIN_MUTATION);
+
+const handleSubmit = async () => {
+  try {
+    const { data } = await loginMutation({ variables: { username, password } });
+    localStorage.setItem('userId', data.login.id);
+    localStorage.setItem('username', data.login.username);
+    localStorage.setItem('role', data.login.role); //save role here
+    navigate('/bookslist');
+  } catch (err) { setError(err.message); }
+};
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
@@ -60,7 +64,7 @@ const LoginPage = () => {
               </div>
               <input
                 type="text"
-                placeholder="Utilizator (ex: admin)"
+                placeholder="Utilizator"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 onKeyPress={handleKeyPress}
