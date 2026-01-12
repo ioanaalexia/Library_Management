@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { BookOpen, Lock, User, AlertCircle } from 'lucide-react';
+import { useMutation } from '@apollo/client';
+import { LOGIN_MUTATION } from '../graphql/mutations';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
@@ -7,17 +9,23 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const [login] = useMutation(LOGIN_MUTATION, {
+    onCompleted: (data) => {
+      localStorage.setItem('token', data.login); // Salvează token-ul
+      alert('Autentificare reușită!');
+    },
+    onError: (err) => {
+      setError(err.message); // Setează eroarea
+    }
+  });
+
   const handleSubmit = () => {
     if (username && password) {
       setLoading(true);
       setError(null);
-      
-      // DEMO: Simulare autentificare
-      
-      setTimeout(() => {
-        setLoading(false);
-        alert('Autentificare reușită!');
-      }, 1500);
+
+      login({ variables: { username, password } })
+        .finally(() => setLoading(false));
     } else {
       setError('Te rugăm să completezi toate câmpurile.');
     }
@@ -145,7 +153,6 @@ const LoginPage = () => {
               Ai uitat parola?
             </a>
           </div>
-
         </div>
       </div>
 

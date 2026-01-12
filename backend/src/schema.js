@@ -12,10 +12,11 @@ const typeDefs = gql`
   }
 
   # Object Types
-  type User {
+    type User {
     id: ID!
     username: String!
-    role: Role!
+    password: String!
+    role: String!
   }
 
   type Book {
@@ -36,14 +37,13 @@ const typeDefs = gql`
 
   # Queries
   type Query {
+    users: [User!]!
+    me: User
     books: [Book!]!
-    booksByFilter(category: String, status: BookStatus): [Book!]!
+    booksByFilter(category: String, status: String): [Book!]!
     book(id: ID!): Book
     loans: [Loan!]!
     paginatedBooks(page: Int!, limit: Int!): [Book!]!
-    users: [User!]!
-    me: User
-
   }
 
   # Mutations

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Book, Search, Filter, BookOpen, User, ShoppingCart, Heart, Eye, UserCircle, Plus, Edit2, Trash2, X } from 'lucide-react';
 
 const BooksPage = () => {
@@ -6,8 +6,15 @@ const BooksPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
 
-  const [userRole] = useState('ADMIN');
-  
+  const [userRole, setUserRole] = useState('MEMBER'); // Rolul utilizatorului
+
+  useEffect(() => {
+    const role = localStorage.getItem('role'); // Recuperează rolul utilizatorului
+    if (role) {
+      setUserRole(role);
+    }
+  }, []);
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
 
@@ -69,12 +76,12 @@ const BooksPage = () => {
     { value: 'BORROWED', label: 'Împrumutate' }
   ];
 
-    const filteredBooks = books.filter(book => {
+  const filteredBooks = books.filter(book => {
     const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          book.author.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || book.category === selectedCategory;
     const matchesStatus = selectedStatus === 'all' || book.status === selectedStatus;
-    
+
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
@@ -83,7 +90,7 @@ const BooksPage = () => {
   };
 
   const goToProfile = () => {
-    alert('Navigare cstre profil...');
+    alert('Navigare către profil...');
   };
 
   const handleAddBook = () => {
@@ -147,7 +154,7 @@ const BooksPage = () => {
               </p>
             </div>
           </div>
-          
+
           <div style={styles.headerActions}>
             {userRole === 'ADMIN' && (
               <button 

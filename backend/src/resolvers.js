@@ -1,5 +1,8 @@
 const books = [];
-const users = [];
+const users = [
+  { id: "1", username: "admin", password: "admin", role: "ADMIN" },
+  { id: "2", username: "member", password: "member", role: "MEMBER" }
+];
 const loans = [];
 
 const resolvers = {
@@ -40,9 +43,12 @@ const resolvers = {
     },
 
     login: (_, { username, password }) => {
-      const user = users.find(u => u.username === username && u.password === password);
+      const user = users.find(u => u.username === username);
       if (!user) {
-        throw new Error("Invalid authentication");
+        throw new Error("User not found"); 
+      }
+      if (user.password !== password) {
+        throw new Error("Invalid password");
       }
       return user.username;
     },
@@ -126,4 +132,4 @@ const resolvers = {
   }
 };
 
-module.exports = resolvers;
+module.exports = { users, books, loans, resolvers };

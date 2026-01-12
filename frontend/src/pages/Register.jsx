@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
+import { useMutation, gql } from '@apollo/client';
 import { BookOpen, Lock, User, AlertCircle, Mail, Phone, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
+const REGISTER_MUTATION = gql`
+  mutation Register($username: String!, $password: String!) {
+    register(username: $username, password: $password)
+  }
+`;
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -11,8 +19,11 @@ const RegisterPage = () => {
     confirmPassword: '',
     role: 'MEMBER',
   });
-  const [loading, setLoading] = useState(false);
+  
   const [error, setError] = useState(null);
+  const [register, { loading }] = useMutation(REGISTER_MUTATION); // Initialize the mutation
+
+  const navigate = useNavigate(); // Hook pentru navigare
 
   const handleChange = (e) => {
     setFormData({
@@ -21,7 +32,7 @@ const RegisterPage = () => {
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setError(null);
 
     if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
@@ -39,23 +50,18 @@ const RegisterPage = () => {
       return;
     }
 
-    setLoading(true);
-    
-    // DEMO: Simulare înregistrare
-    // În proiectul tău real, înlocuiește cu:
-    // register({ variables: { 
-    //   username: formData.username,
-    //   email: formData.email,
-    //   phone: formData.phone,
-    //   address: formData.address,
-    //   password: formData.password,
-    //   role: formData.role 
-    // }});
-    
-    setTimeout(() => {
-      setLoading(false);
-      alert(`Cont creat cu succes cu rolul ${formData.role}!`);
-    }, 1500);
+    try {
+      await register({
+        variables: {
+          username: formData.username,
+          password: formData.password,
+        },
+      });
+      alert('Cont creat cu succes!');
+      navigate('/bookslist');
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   const handleKeyPress = (e) => {
