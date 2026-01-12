@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { Book, Search, Filter, BookOpen, User, ShoppingCart, Heart, Eye, UserCircle, Plus, LogOut, Edit2, Trash2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, gql, useMutation } from '@apollo/client';
@@ -71,14 +71,12 @@ const BooksPage = () => {
   const [updateBook] = useMutation(UPDATE_BOOK);
 
   const navigate = useNavigate();
-
-
   
   const handleDeleteBook = async (bookId) => {
   if (window.confirm('Esti sigur ca vrei sa stergi aceasta carte?')) {
     try {
       await deleteBook({ variables: { id: bookId } });
-      setBooks(books.filter(b => b.id !== bookId)); // UI update
+      setBooks(books.filter(b => b.id !== bookId)); //ui update
       alert("Carte ștearsă!");
     } catch (e) { alert("Eroare la ștergere"); }
   }
@@ -104,6 +102,11 @@ const BooksPage = () => {
     }
   }, [data]);
 
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+
   const handleBorrow = async (bookId) => {
   const userId = localStorage.getItem('userId');
   if (!userId) {
@@ -112,13 +115,11 @@ const BooksPage = () => {
   }
 
   try {
-    console.log('Trimitem mutația...', { bookId, userId });
     const res = await client.mutate({
       mutation: BORROW_BOOK,
       variables: { bookId: String(bookId), userId: localStorage.getItem('userId') }
     });
 
-    console.log('Rezultatul mutației:', res);
 
     setBooks(prevBooks =>
       prevBooks.map(b =>
@@ -142,7 +143,7 @@ const BooksPage = () => {
 };
 
   const goToProfile = () => {
-    navigate('/profile'); // Navigate to the profile page
+    navigate('/profile'); 
   };
 
   const handleAddBook = () => {
